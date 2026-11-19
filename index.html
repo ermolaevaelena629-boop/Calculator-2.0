@@ -1,0 +1,302 @@
+
+html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор расходов апартаментов</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; }
+        .result-box { transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="p-6 max-w-4xl mx-auto">
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-4">🏢 Калькулятор расходов при передаче в аренду</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Выберите номер апартамента</label>
+                <select id="apartSelect" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">-- Выберите номер --</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Площадь апартамента (кв.м)</label>
+                <input type="number" id="apartArea" step="0.01" class="w-full border border-gray-300 rounded-lg p-2.5 bg-gray-50" readonly>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Наименование пула</label>
+                <input type="text" id="poolName" class="w-full border border-gray-300 rounded-lg p-2.5 bg-gray-50" readonly>
+            </div>
+        </div>
+
+        <button onclick="calculate()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200">
+            Рассчитать расходы
+        </button>
+    </div>
+
+    <div id="results" class="hidden space-y-6">
+        <!-- КЭР -->
+        <div class="bg-white rounded-xl shadow-lg p-6 result-box border-l-4 border-blue-500">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">💧 Коммунальные и эксплуатационные расходы (КЭР)</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-600">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+                        <tr>
+                            <th class="px-4 py-3">Показатель</th>
+                            <th class="px-4 py-3 text-right">В месяц (Лето)</th>
+                            <th class="px-4 py-3 text-right">В месяц (Зима)</th>
+                            <th class="px-4 py-3 text-right">В год</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b">
+                            <td class="px-4 py-3 font-medium">Постоянные расходы (Fixed)</td>
+                            <td class="px-4 py-3 text-right" id="kerFixedMonth">0 ₽</td>
+                            <td class="px-4 py-3 text-right" id="kerFixedMonthW">0 ₽</td>
+                            <td class="px-4 py-3 text-right" id="kerFixedYear">0 ₽</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="px-4 py-3 font-medium">Переменные расходы (счетчики)</td>
+                            <td class="px-4 py-3 text-right" id="kerVarSummer">0 ₽</td>
+                            <td class="px-4 py-3 text-right" id="kerVarWinter">0 ₽</td>
+                            <td class="px-4 py-3 text-right" id="kerVarYear">0 ₽</td>
+                        </tr>
+                        <tr class="bg-blue-50 font-bold text-blue-900">
+                            <td class="px-4 py-3">ИТОГО КЭР</td>
+                            <td class="px-4 py-3 text-right" id="kerTotalSummer">0 ₽</td>
+                            <td class="px-4 py-3 text-right" id="kerTotalWinter">0 ₽</td>
+                            <td class="px-4 py-3 text-right" id="kerTotalYear">0 ₽</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ООР -->
+        <div class="bg-white rounded-xl shadow-lg p-6 result-box border-l-4 border-green-500">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">📊 Общеоперационные расходы (ООР)</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-600">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+                        <tr>
+                            <th class="px-4 py-3">Показатель</th>
+                            <th class="px-4 py-3 text-right">В месяц</th>
+                            <th class="px-4 py-3 text-right">В год</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b">
+                            <td class="px-4 py-3 font-medium">Постоянные расходы (Админ. и маркетинг)</td>
+                            <td class="px-4 py-3 text-right" id="oorFixedMonth">0 ₽</td>
+                            <td class="px-4 py-3 text-right" id="oorFixedYear">0 ₽</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="px-4 py-3 font-medium">Переменные расходы (Обслуживание фонда)</td>
+                            <td class="px-4 py-3 text-right" id="oorVarMonth">0 ₽</td>
+                            <td class="px-4 py-3 text-right" id="oorVarYear">0 ₽</td>
+                        </tr>
+                        <tr class="bg-green-50 font-bold text-green-900">
+                            <td class="px-4 py-3">ИТОГО ООР</td>
+                            <td class="px-4 py-3 text-right" id="oorTotalMonth">0 ₽</td>
+                            <td class="px-4 py-3 text-right" id="oorTotalYear">0 ₽</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Общий итог -->
+        <div class="bg-gray-800 text-white rounded-xl shadow-lg p-6 result-box">
+            <h2 class="text-xl font-bold mb-4">🎯 Общий итог расходов инвестора</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <div class="text-sm text-gray-300 mb-1">Расход в месяц (Лето)</div>
+                    <div class="text-2xl font-bold text-yellow-400" id="grandTotalSummer">0 ₽</div>
+                </div>
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <div class="text-sm text-gray-300 mb-1">Расход в месяц (Зима)</div>
+                    <div class="text-2xl font-bold text-yellow-400" id="grandTotalWinter">0 ₽</div>
+                </div>
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <div class="text-sm text-gray-300 mb-1">Расход в год</div>
+                    <div class="text-2xl font-bold text-green-400" id="grandTotalYear">0 ₽</div>
+                </div>
+            </div>
+            <p class="text-xs text-gray-400 mt-4 text-center">* Переменные коммунальные расходы рассчитаны по социальным нормативам РФ. Фактическая оплата производится строго по показаниям индивидуальных приборов учета.</p>
+        </div>
+    </div>
+
+    <script>
+        // Данные из таблицы планировок
+        const apartments = {
+            "1": { area: 51.13, pool: "1-студия" }, "3": { area: 44.10, pool: "1-студия" },
+            "4": { area: 75.51, pool: "2-студия" }, "5": { area: 59.34, pool: "1-студия" },
+            "6": { area: 72.12, pool: "1-студия люкс" }, "7": { area: 42.49, pool: "1-студия" },
+            "8": { area: 41.66, pool: "1-студия" }, "9": { area: 75.00, pool: "2-студия" },
+            "10": { area: 59.90, pool: "1-студия" }, "11": { area: 57.10, pool: "1-студия" },
+            "12": { area: 84.93, pool: "2-студия" }, "13": { area: 40.88, pool: "1-студия" },
+            "14": { area: 86.53, pool: "2-студия" }, "15": { area: 80.29, pool: "2-студия" },
+            "16": { area: 41.00, pool: "1-студия" }, "17": { area: 84.32, pool: "2-студия" },
+            "18": { area: 56.33, pool: "1-студия" }, "19": { area: 51.30, pool: "1-студия" },
+            "21": { area: 38.28, pool: "1-студия" }, "22": { area: 44.04, pool: "1-студия" },
+            "23": { area: 75.51, pool: "1-студия люкс" }, "24": { area: 59.34, pool: "1-студия" },
+            "25": { area: 75.12, pool: "1-студия люкс" }, "26": { area: 41.99, pool: "1-студия" },
+            "27": { area: 42.11, pool: "1-студия" }, "28": { area: 75.02, pool: "1-студия люкс" },
+            "29": { area: 59.88, pool: "1-студия" }, "30": { area: 57.10, pool: "1-студия" },
+            "31": { area: 84.94, pool: "1-студия люкс" }, "32": { area: 40.88, pool: "1-студия" },
+            "34": { area: 59.64, pool: "1-студия" }, "35": { area: 55.45, pool: "1-студия" },
+            "37": { area: 41.00, pool: "1-студия" }, "38": { area: 84.48, pool: "2-студия" },
+            "39": { area: 56.33, pool: "1-студия" }, "40": { area: 42.70, pool: "1-студия" },
+            "41": { area: 42.70, pool: "1-студия" }, "42": { area: 64.35, pool: "1-студия люкс" },
+            "43": { area: 45.88, pool: "1-студия" }, "44": { area: 57.60, pool: "1-студия" },
+            "45": { area: 56.33, pool: "1-студия" }, "46": { area: 56.03, pool: "1-студия" },
+            "47": { area: 97.94, pool: "2-студия люкс" }, "48": { area: 134.35, pool: "2-студия люкс" },
+            "49": { area: 66.89, pool: "1-студия люкс" }, "51": { area: 38.28, pool: "1-студия" },
+            "52": { area: 44.57, pool: "1-студия" }, "53": { area: 77.26, pool: "1-студия люкс" },
+            "54": { area: 92.34, pool: "2-студия люкс" }, "55": { area: 85.23, pool: "2-студия" },
+            "56": { area: 84.98, pool: "2-студия" }, "57": { area: 93.32, pool: "2-студия люкс" },
+            "58": { area: 56.11, pool: "1-студия" }, "59": { area: 86.06, pool: "1-студия люкс" },
+            "60": { area: 38.15, pool: "1-студия" }, "62": { area: 59.84, pool: "1-студия" },
+            "63": { area: 57.59, pool: "1-студия" }, "65": { area: 38.83, pool: "1-студия" },
+            "66": { area: 85.89, pool: "1-студия люкс" }, "67": { area: 55.96, pool: "1-студия" },
+            "102": { area: 27.52, pool: "студия" }, "202": { area: 27.52, pool: "студия" },
+            "215": { area: 27.06, pool: "студия" }, "218": { area: 25.05, pool: "студия" },
+            "313": { area: 27.52, pool: "студия" }, "322": { area: 32.68, pool: "студия" },
+            "325": { area: 30.88, pool: "студия" }
+        };
+
+        // Параметры пулов (Площадь пула, Количество апартаментов)
+        const pools = {
+            "студия": { area: 198.23, count: 7 },
+            "1-студия": { area: 1831.84, count: 37 },
+            "1-студия люкс": { area: 763.16, count: 10 },
+            "2-студия": { area: 741.27, count: 9 },
+            "2-студия люкс": { area: 417.95, count: 4 }
+        };
+
+        // Тарифы
+        const tariffs = {
+            kerFixedYearPerSqm: 4358.30,
+            kerFixedMonthPerSqm: 363.19,
+            oorFixedYearPerSqm: 29600.40,
+            oorFixedMonthPerSqm: 2466.70,
+            oorVarYearPerSqm: 24376.80,
+            oorVarMonthPerSqm: 2031.40,
+            waterColdPerSqm: 6.9 / 18,
+            waterHotPerSqm: 4.7 / 18,
+            sewagePerSqm: 11.7 / 18,
+            electroPerSqm: 96 / 18,
+            heatingPerSqm: 0.018,
+            tariffCold: 24.5,
+            tariffHot: 381.3,
+            tariffSewage: 24.5,
+            tariffElectro: 7.8,
+            tariffHeating: 5097
+        };
+
+        // Заполнение выпадающего списка
+        const select = document.getElementById('apartSelect');
+        Object.keys(apartments).sort((a,b) => parseInt(a) - parseInt(b)).forEach(num => {
+            const option = document.createElement('option');
+            option.value = num;
+            option.textContent = `№ ${num} (${apartments[num].area} м², ${apartments[num].pool})`;
+            select.appendChild(option);
+        });
+
+        // Автозаполнение при выборе
+        select.addEventListener('change', function() {
+            const num = this.value;
+            if (num) {
+                document.getElementById('apartArea').value = apartments[num].area;
+                document.getElementById('poolName').value = apartments[num].pool;
+            } else {
+                document.getElementById('apartArea').value = '';
+                document.getElementById('poolName').value = '';
+            }
+        });
+
+        function formatMoney(amount) {
+            return Math.round(amount).toLocaleString('ru-RU') + ' ₽';
+        }
+
+        function calculate() {
+            const num = document.getElementById('apartSelect').value;
+            if (!num) {
+                alert("Пожалуйста, выберите номер апартамента");
+                return;
+            }
+
+            const area = apartments[num].area;
+            const pool = apartments[num].pool;
+            const poolData = pools[pool];
+
+            // 1. КЭР Постоянные (распределяются на весь пул)
+            const kerFixedYear = (tariffs.kerFixedYearPerSqm * poolData.area) / poolData.count;
+            const kerFixedMonth = (tariffs.kerFixedMonthPerSqm * poolData.area) / poolData.count;
+
+            // 2. КЭР Переменные (зависят от площади конкретного апартамента)
+            const varCold = tariffs.waterColdPerSqm * area * tariffs.tariffCold;
+            const varHot = tariffs.waterHotPerSqm * area * tariffs.tariffHot;
+            const varSewage = tariffs.sewagePerSqm * area * tariffs.tariffSewage;
+            const varElectro = tariffs.electroPerSqm * area * tariffs.tariffElectro;
+            
+            const kerVarSummerMonth = varCold + varHot + varSewage + varElectro;
+            const varHeatingWinter = tariffs.heatingPerSqm * area * tariffs.tariffHeating;
+            const kerVarWinterMonth = kerVarSummerMonth + varHeatingWinter;
+            
+            const kerVarYear = (kerVarSummerMonth * 5) + (kerVarWinterMonth * 7);
+
+            // Итого КЭР
+            const kerTotalSummer = kerFixedMonth + kerVarSummerMonth;
+            const kerTotalWinter = kerFixedMonth + kerVarWinterMonth;
+            const kerTotalYear = kerFixedYear + kerVarYear;
+
+            // 3. ООР (распределяются на весь пул по тарифу за кв.м.)
+            const oorFixedYear = (tariffs.oorFixedYearPerSqm * poolData.area) / poolData.count;
+            const oorFixedMonth = (tariffs.oorFixedMonthPerSqm * poolData.area) / poolData.count;
+            const oorVarYear = (tariffs.oorVarYearPerSqm * poolData.area) / poolData.count;
+            const oorVarMonth = (tariffs.oorVarMonthPerSqm * poolData.area) / poolData.count;
+
+            const oorTotalMonth = oorFixedMonth + oorVarMonth;
+            const oorTotalYear = oorFixedYear + oorVarYear;
+
+            // 4. Общий итог
+            const grandTotalSummer = kerTotalSummer + oorTotalMonth;
+            const grandTotalWinter = kerTotalWinter + oorTotalMonth;
+            const grandTotalYear = kerTotalYear + oorTotalYear;
+
+            // Вывод результатов
+            document.getElementById('kerFixedMonth').textContent = formatMoney(kerFixedMonth);
+            document.getElementById('kerFixedMonthW').textContent = formatMoney(kerFixedMonth);
+            document.getElementById('kerFixedYear').textContent = formatMoney(kerFixedYear);
+            
+            document.getElementById('kerVarSummer').textContent = formatMoney(kerVarSummerMonth);
+            document.getElementById('kerVarWinter').textContent = formatMoney(kerVarWinterMonth);
+            document.getElementById('kerVarYear').textContent = formatMoney(kerVarYear);
+            
+            document.getElementById('kerTotalSummer').textContent = formatMoney(kerTotalSummer);
+            document.getElementById('kerTotalWinter').textContent = formatMoney(kerTotalWinter);
+            document.getElementById('kerTotalYear').textContent = formatMoney(kerTotalYear);
+
+            document.getElementById('oorFixedMonth').textContent = formatMoney(oorFixedMonth);
+            document.getElementById('oorFixedYear').textContent = formatMoney(oorFixedYear);
+            document.getElementById('oorVarMonth').textContent = formatMoney(oorVarMonth);
+            document.getElementById('oorVarYear').textContent = formatMoney(oorVarYear);
+            document.getElementById('oorTotalMonth').textContent = formatMoney(oorTotalMonth);
+            document.getElementById('oorTotalYear').textContent = formatMoney(oorTotalYear);
+
+            document.getElementById('grandTotalSummer').textContent = formatMoney(grandTotalSummer);
+            document.getElementById('grandTotalWinter').textContent = formatMoney(grandTotalWinter);
+            document.getElementById('grandTotalYear').textContent = formatMoney(grandTotalYear);
+
+            document.getElementById('results').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
+```
+
